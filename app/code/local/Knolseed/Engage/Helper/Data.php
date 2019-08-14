@@ -13,15 +13,15 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
   public $daytimeinminutes = '1440';
   public $numberofdays = '30';
   public $interval = '240';
-  public $records = '500';
+  public $records = '10000';
   public $customerattributes = array();
   public $productattributes = array();
   public $categoryAttributes = array();
   public $intervalRange = 30;
 
   # To be configured appropriately
-  public $global_log_level = 'PROD';
-#  public $global_log_level = 'DEV';
+#  public $global_log_level = 'PROD';
+  public $global_log_level = 'DEV';
 
 /* contructing customer and product attributes*/
   public function __construct() {
