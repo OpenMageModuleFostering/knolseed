@@ -298,6 +298,7 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 
     $coreConfigObj3 = new Mage_Core_Model_Config();
     $coreConfigObj3->saveConfig('upload_options/upload/transaction', $removedays." ".$uploadtime, 'default', 0);
+    Mage::app()->getStore()->resetConfig();
   }
 
 
@@ -335,9 +336,11 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 
     $coreConfig = new Mage_Core_Model_Config();
     $coreConfig->saveConfig('engage_options/google/google_content', $googlecode, 'default', 0);
+    Mage::app()->getStore()->resetConfig();
 
   }
 
 }
 
 ?>
+

@@ -51,6 +51,7 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
 
         $coreConfigObj = new Mage_Core_Model_Config();
         $coreConfigObj->saveConfig('engage_options/aws/token', $token, 'default', 0);
+        Mage::app()->getStore()->resetConfig();
         echo 1;
         return true;
 
@@ -252,3 +253,4 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
   }
 
 }
+

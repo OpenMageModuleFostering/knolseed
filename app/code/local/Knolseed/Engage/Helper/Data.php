@@ -21,7 +21,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
   # To be configured appropriately
   public $global_log_level = 'PROD';
-  # public $global_log_level = 'DEV';
+#  public $global_log_level = 'DEV';
 
 /* contructing customer and product attributes*/
   public function __construct() {
@@ -101,6 +101,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         // set time backtime
         $coredataobj = new Mage_Core_Model_Config();
         $coredataobj->saveConfig('upload_options/upload/transaction', ' ' ,'default', 0);
+        Mage::app()->getStore()->resetConfig();
 
         $timeinterval = Mage::getStoreConfig('upload_options/upload/timeframe');
         $nextexecutiontime = date('Y-m-d', strtotime($timeinterval." month"));
@@ -113,14 +114,14 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         if(in_array('1', $uploadinfo))
         { 
           for($i=$totalnoofdays;$i>=0;$i--){
-            $this->getTransactionInfo($i,$uploadtime, $type='transaction',$timeinterval);
+            $this->getTransactionInfo($i, $uploadtime, $type='transaction', $timeinterval);
           }
         }
 
         if(in_array('2', $uploadinfo))
         {
           for($k=$totalnoofdays;$k>=0;$k--){
-            $this->getBrowsingInfo($k,$uploadtime,$type='weblog',$timeinterval);
+            $this->getBrowsingInfo($k, $uploadtime, $type='weblog', $timeinterval);
           }
         }
 
