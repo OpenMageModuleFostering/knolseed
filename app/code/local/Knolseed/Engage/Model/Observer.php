@@ -290,6 +290,12 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
     // Get current date
     $removedays = date('Y-m-d');
     $uploadtime = Mage::getStoreConfig('upload_options/upload/time');
+    if($uploadtime){
+      Mage::log("Txn data upload time=".print_r($uploadtime, true), null, 'knolseed.log');
+    }else{
+      Mage::log("Txn data upload time is not found", null, 'knolseed.log');
+    }
+
     $coreConfigObj3 = new Mage_Core_Model_Config();
     $coreConfigObj3->saveConfig('upload_options/upload/transaction', $removedays." ".$uploadtime, 'default', 0);
   }
@@ -298,22 +304,34 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
   public function saveGoogleAnalyticsCode(){
     Mage::log("Entry Knolseed_Engage_Model_Observer::saveGoogleAnalyticsCode()",null,'knolseed.log');
 
-    $googlecode = "var _gaq = [], __bc = [], push = Array.prototype.push;
-                         _gaq.push = function () {
-                         var i = 0, max = arguments.length, arg;
-                         while (i < max) {
-                           arg = arguments[i++]; push.call(_gaq, arg); push.call(__bc, arg);
-                         }
-                     };
-                     (function() {
-                         var bc = document.createElement('script'); bc.type='text/javascript'; bc.async=true;
-                         bc.src = 'http://ers.knolseed.com:1234/embed.js';
-                         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(bc, s);
-                     })();
-                </script>
+    $googlecode = "(function (w, d, a, m) {
+        w['_knolseed'] = w['_knolseed'] || [];
+        /** intercepts ga.js calls */
+        var push = Array.prototype.push;
+        w['_gaq'] = [];
+        w['_gaq'].push = function () {
+           var i = 0, max = arguments.length, arg;
+           while (i < max) {
+             arg = arguments[i++]; push.call(_gaq, arg); push.call(_knolseed, arg);
+           }
+       };
+       /** intercepts analytics.js calls*/
+        w['ga'] = function() {
+          (w['ga'].q = w['ga'].q || []).push(arguments);
+          (w['_knolseed'] = w['_knolseed'] || []).push(arguments);
+        };
+        a = d.createElement('script'),
+        m = d.getElementsByTagName('script')[0];
+        a.async = 1;
+        a.src = 'http://ers.knolseed.com:1234/embed.js';
+        m.parentNode.insertBefore(a, m)
+      })(window,document);
 
-                <script>
-                    __bc.push(['_setCustomerId', 'customer_id']);";
+    </script>
+
+    <script>
+        _knolseed.push([\"_setCustomerId\", \"customer_id\"]);
+    ";
 
     $coreConfig = new Mage_Core_Model_Config();
     $coreConfig->saveConfig('engage_options/google/google_content', $googlecode, 'default', 0);

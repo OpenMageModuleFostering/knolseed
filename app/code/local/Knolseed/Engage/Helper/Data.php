@@ -6,6 +6,7 @@
  * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  *
  */
+
 class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 {
 
@@ -20,8 +21,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
   # To be configured appropriately
   public $global_log_level = 'PROD';
-
-
+/* contructing customer and product attributes*/
   public function __construct() {
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::__construct()",null,'knolseed.log');
 
@@ -39,10 +39,10 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       $this->productattributes[] = $value['value'];
     }
 
-    $this->kslog('DEBUG',"productattributes=".$this->productattributes, null, 'knolseed.log');    
+    $this->kslog('DEBUG',"productattributes=".print_r($this->productattributes,true), null, 'knolseed.log');    
   }
 
-
+/* Creating log */
   public function kslog($loglevel, $msg, $two, $file){
     # Mage::log("In kslog, params=".$loglevel.",".$msg.",".$two.",".$file, null, 'knolseed.log');
     # Mage::log("In kslog, global_log_level=".$this->global_log_level, null, 'knolseed.log');
@@ -74,13 +74,16 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
   /**
    * This method checks next execution time for upload items CSV file.
-   * 
+   * Next upload time
    */
   public function startUploadData(){
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::startUploadData()",null,'knolseed.log');
 
     try{
       $uploadtime = Mage::getStoreConfig('upload_options/upload/transaction');
+
+      $this->kslog('DEBUG',"uploadtime=".print_r($uploadtime,true),null,'knolseed.log');
+
       
       // return false if there is no time set.
       if( !trim($uploadtime) ) {
@@ -95,13 +98,15 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       {
         // set time backtime
         $coredataobj = new Mage_Core_Model_Config();
-        $coredataobj->saveConfig('upload_options/upload/transaction', 'default', 0);
+        $coredataobj->saveConfig('upload_options/upload/transaction', ' ' ,'default', 0);
 
         $timeinterval = Mage::getStoreConfig('upload_options/upload/timeframe');
         $nextexecutiontime = date('Y-m-d', strtotime($timeinterval." month"));
 
         // Get total number of days
         $totalnoofdays = $this->numberofdays*$timeinterval;
+
+        $this->kslog('DEBUG',"total no of days=".print_r($totalnoofdays,true),null,'knolseed.log');
 
         if(in_array('1', $uploadinfo))
         { 
@@ -117,9 +122,6 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
           }
         }
 
-        /*$coreConfigObj3 = new Mage_Core_Model_Config();
-        $coreConfigObj3->saveConfig('upload_options/upload/transaction', $nextexecutiontime." ".$time, 'default', 0);*/
-
       }
     }catch(Exception $e){
       $errormessage = "Critical Error! Transaction data sync unable to authenticate with Knolseed. Please email support@knolseed.com about this error, and we will help you to fix this problem." ;
@@ -129,13 +131,13 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
   }
 
-
+/* function to print product categories*/
   public function printCategories(){
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::printCategories()",null,'knolseed.log');
     # $this->printCategories_1();
   }
 
-
+/* function to print categories */
   public function printCategories_1(){
     $category = Mage::getModel('catalog/category');
     $tree = $category->getTreeModel();
@@ -185,7 +187,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       $collection->getSelect()->joinLeft(array('sfo'=>'sales_flat_order'),
         'main_table.order_id = sfo.entity_id',array('sfo.shipping_amount','sfo.customer_id','sfo.increment_id',
-          'sfo.grand_total'));
+          'sfo.grand_total','sfo.base_currency_code','sfo.order_currency_code','sfo.global_currency_code','sfo.store_currency_code'));
 
       $collection->addFieldToFilter('main_table.created_at',array('like' => $createdday.'%'));
       
@@ -229,11 +231,11 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       $Tax_header = 'Tax';
       $Shipping_header = 'Shipping';
 
-      //$handle = fopen('test.csv', 'w');
-      //fputcsv($fp, array($transaction_id_header,$customer_id_header,$timestamp_header,$Product_id_header,$Category_header,
+      // $handle = fopen('test.csv', 'w');
+      // fputcsv($fp, array($transaction_id_header,$customer_id_header,$timestamp_header,$Product_id_header,$Category_header,
                 //'Transaction Amount','No of items',$Tax_header,$Shipping_header,'Product Description'));
-      $headers_transaction = '"'.$transaction_id_header.'","'.$customer_id_header.'","'.$timestamp_header.'","'.$Product_id_header.'","'.$sku_header.'","'.$Category_header.'","Transaction Amount","No of items","'.$Tax_header.'","'.$Shipping_header.'","Product Description"'."\n" ;
-      fwrite($fp, $headers_transaction) ;
+      $headers_transaction = '"'.$transaction_id_header.'","'.$customer_id_header.'","'.$timestamp_header.'","'.$Product_id_header.'","'.$sku_header.'","'.$Category_header.'","Transaction Amount","No of items","'.$Tax_header.'","'.$Shipping_header.'","Product Description","base_currency_code","order_currency_code","store_currency_code","global_currency_code"'."\n" ;
+      gzwrite($fp, $headers_transaction) ;
 
       // Iterate through sales order items
       foreach($collection as $col){
@@ -250,7 +252,16 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         $shipping = $col['shipping_amount'];
         $description = str_replace('"', '""', $col['description']);
         $proid = str_replace('"', '""', $col['product_id']);
+
+        $bcc = str_replace('"', '""', $col['base_currency_code']);
+        $occ = str_replace('"', '""', $col['order_currency_code']);
+        $scc = str_replace('"', '""', $col['store_currency_code']);
+        $gcc = str_replace('"', '""', $col['global_currency_code']);
+
         $product = Mage::getModel('catalog/product')->load($proid);
+        
+        # Mage::log("Found product:".print_r($product,true),null,'knolseed.log');
+        
         $product_price = $product->getFinalPrice() ;
         //$cats = implode(",", $product->getCategoryIds());
         
@@ -267,7 +278,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         //fputcsv($fp, array($transaction_id,$customer_id,$timestamp,$product_id,$cats,$transaction_amount,
                   // $items,$tax,$shipping,$description));
 
-        fwrite($fp, '"'.$transaction_id.'","'.$customer_id.'","'.$timestamp.'","'.$product_id.'","'.$sku.'","'.$cats.'","'.$product_price.'","'.$items.'","'.$tax.'","'.$shipping.'","'.$description.'"'."\n");
+        gzwrite($fp, '"'.$transaction_id.'","'.$customer_id.'","'.$timestamp.'","'.$product_id.'","'.$sku.'","'.$cats.'","'.$product_price.'","'.$items.'","'.$tax.'","'.$shipping.'","'.$description.'","'.$bcc.'","'.$occ.'","'.$scc.'","'.$gcc.'"'."\n");
         
       }
       // Close file
@@ -321,6 +332,8 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       // Browsing info collection
       $data = $readAdapter->fetchAll($select);
 
+      $this->kslog('DEBUG',"browsing data=".print_r($data,true),null,'knolseed.log');  
+
       // Path to CSV file
       $path =  Mage::getBaseDir('var')."/";
 
@@ -362,7 +375,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       $headers_transaction = '"'.$customer_id_header.'","'.$timestamp_header.'","'.$URL_header.'","'.$Product_id_header.'","'.$Category_header.'"'."\n" ;
       //fputcsv($fp, array('Customer_id','Timestamp','URL','Product_id','Category'));
-      fwrite($fp, $headers_transaction) ;
+      gzwrite($fp, $headers_transaction) ;
 
       foreach($data as $urlinfo){
         $product = strpos($urlinfo['url'], 'product');
@@ -394,7 +407,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
         // Puting sales browsing items into CSV file
         //fputcsv($fp, array($urlinfo['visitor_id'],$urlinfo['visit_time'],$stringurl,$productid,$categoryname)); 
-        fwrite($fp, '"'.str_replace('"', '""', $urlinfo['visitor_id']).'","'.str_replace('"', '""', $urlinfo['visit_time']).'","'.$stringurl.'","'.$productid.'","'.$categoryname.'"'."\n");  
+        gzwrite($fp, '"'.str_replace('"', '""', $urlinfo['visitor_id']).'","'.str_replace('"', '""', $urlinfo['visit_time']).'","'.$stringurl.'","'.$productid.'","'.$categoryname.'"'."\n");  
       }
 
       // Close file
@@ -424,10 +437,11 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
   /**
    * Check if its time to run!
    * FIXME: Convert all dates to epoch timestamps and then compare
+   * Execution date time 
    */
   public function checkExecuteTime($runTime) {
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::checkExecuteTime()",null,'knolseed.log');
-
+    $this->kslog('DEBUG',"runtime = ".print_r($runTime,true),null,'knolseed.log');
     list($date, $time) = explode(" ", $runTime) ;
 
     $min = date("i");
@@ -455,6 +469,9 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     $cRuntime = strtotime($runTime);
     $cFrom = strtotime($from);
     $cTo = strtotime($to);
+
+  $this->kslog('DEBUG',"cFrom = ".print_r($from,true),null,'knolseed.log');
+  $this->kslog('DEBUG',"cTo = ".print_r($to,true),null,'knolseed.log');
 
     if(($cRuntime >= $cFrom)&& ($cRuntime <= $cTo)){
       return true;
@@ -512,6 +529,8 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
   }
 
+
+/* Creating folder in AWS */
 
   public function getAWSFolderName($type){
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::getAWSFolderName()",null,'knolseed.log');
@@ -572,6 +591,8 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         //$fp = fopen($path.$filename, 'w');
         $filename = "Cust_".date("Ymd")."_1_of_".$numberofchunk.".csv.gz" ;
 
+        $this->kslog('DEBUG',"filename = ".print_r($filename,true),null,'knolseed.log');
+
         // Metadata headers for CSV file
         // Line items 1 as per requirement
         $ctime = date("Ymd", strtotime($from));
@@ -617,7 +638,6 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       $headers = "";
       $custatrarray = '"'.implode('","', array_map('trim',$attributearray)).'"';
       $headers = '"Customer_id",'.$custatrarray."\n";
-      //fwrite($fp,$headers);
       gzwrite($fp, $headers);
 
       $attribute_values = "";
@@ -745,25 +765,33 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
   }
 
 
+
   /**
    * Push created CSV files to S3 Bucket
    * @param   $type='customer'||'product'
    * @return  on success, creates customer CSV file OR push file to S3 bucket
    */
+
   public function checkForQueue($type){
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::checkForQueue()",null,'knolseed.log');
 
     try{
       // queue collection
-      $processcollection = Mage::getModel('engage/engage')->getCollection()
+      $processcollection = Mage::getModel('engage/engage')->getCollection() //data from Kf_cron_process
       ->addFieldToFilter('type',$type)
       ->addFieldToFilter('file_pushed', 0);
+
+
       # All the records for the queue
       $queuedata = $processcollection->getData();                   
+      $this->kslog('DEBUG',"queuedata = ".print_r($queuedata,true),null,'knolseed.log');
 
       // total records in queue
       $totalrecords = count($queuedata);
+      $this->kslog('DEBUG',"$totalrecords = ".print_r($totalrecords,true),null,'knolseed.log');
+
       $path =  Mage::getBaseDir('var')."/";
+      $this->kslog('DEBUG',"$path = ".print_r($path,true),null,'knolseed.log');
       
       if($totalrecords > 0)
       {
@@ -798,7 +826,9 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     $collection = Mage::getModel('engage/engage')->getCollection()->addFieldToFilter('type', $type);
     
     $lastday = $collection->getLastItem()->getCreatedAt();
-    
+   
+    $this->kslog('DEBUG',"lastday".print_r($lastday,true),null,'knolseed.log'); 
+   
     // get hours minutes
     //list($hours,$minute) = explode(":", $time) ;
     $hours = $minute = 0 ;
@@ -981,29 +1011,50 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::processProductfile()",null,'knolseed.log');
 
     try{
+      
       $product_csv_time = Mage::getStoreConfig('engage_options/product/cron_time');
       $product_interval = $this->interval;
 
+      $this->kslog('DEBUG',"product_csv_time = ".print_r($product_csv_time,true),null,'knolseed.log');
+
       //if ($product_csv_time==date("H:i"))
-      if( $this->checkExecuteTime($product_csv_time) )
+      $retval = $this->checkExecuteTime($product_csv_time);
+      $this->kslog('DEBUG',"return value of checkExecuteTime = ".$retval, null, 'knolseed.log');
+      if( $retval )
       { 
-        // check queue for previous failure queue itmes
+        $this->kslog('DEBUG',"checkExecuteTime",null,'knolseed.log');
+        
+        // check queue for previous failure queue items
         $this->checkForQueue('product');
+        $this->kslog('DEBUG',"checkForQueue",null,'knolseed.log');
+        
         // process entry
         $this->makeProcessEntry($product_csv_time,$product_interval,'product');
+        $this->kslog('DEBUG',"makeProcessEntry",null,'knolseed.log');
 
         // collection items for product CSV
         $createdday = Mage::getModel('core/date')->date('Y-m-d');
+
+        $this->kslog('DEBUG',"Created Day = ".print_r($createdday,true),null,'knolseed.log');
+         
         $processcollection = Mage::getModel('engage/engage')->getCollection()
         ->addFieldToFilter('type','product')
         ->addFieldToFilter('created_at', array('eq' => $createdday));
-        
+                
         $productdata = $processcollection->getData();                   
 
         $totalrecords = count($productdata);
-        foreach ($productdata as $process) {
+        foreach ($productdata as $process) 
+         {
+        
+        $this->kslog('DEBUG',"process = ".print_r($process,true),null,'knolseed.log');
+             
+
           // generate product CSV file
-          $this->createProductCsv($process['date_start'], $process['date_end'], $this->productattributes, $process['process_id'], $process['filename'], $process['type'], $process['created_at'], '') ;
+          $this->createProductCsv($process['date_start'], $process['date_end'], 
+          $this->productattributes, $process['process_id'], $process['filename'], $process['type'], $process['created_at'], '') ;
+
+        //$this->kslog('DEBUG',"Product attributes = ".print_r($productattributes,true),null,'knolseed.log');
         }         
       }
 
@@ -1014,7 +1065,6 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
   }
-
 
 
   /**
@@ -1095,13 +1145,13 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       // Line items 2 as per requirement
       $metaheadersline2 = "";
       $metaheadersline2 = '# id=\'Sku\', url=\'url_key\',category=\'category_ids\''."\n" ;
+       $this->kslog('DEBUG',"metaheadersline2=".$metaheadersline2, null, 'knolseed.log');
       gzwrite($fp, $metaheadersline2);
 
       // headers for product CSV file
-      $headers = '"product_id","Sku",'.$product_Attr_str.',"category_ids"'."\n";
+      $headers = '"product_id","Sku","created_at","updated_at",'.$product_Attr_str.',"category_ids"'."\n"; //"created_at,updated_at" by dinesh
       $this->kslog('DEBUG',"headers=".$headers, null, 'knolseed.log');
 
-      //fwrite($fp,$headers);
       gzwrite($fp,$headers);
 
       $chunkcounter = $filecounter = 1;
@@ -1115,7 +1165,25 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         $attributes = $product->getAttributes();
 
         $attribute_values .= ',"'.str_replace('"', '""', $product->getSku()).'"';
+
         $this->kslog('DEBUG',"Starting loop for SKU=".$product->getSku(), null, 'knolseed.log');
+
+        //added column for created_date
+        $created_at = $product->getCreatedAt();
+        if($created_at===null){
+          $attribute_values .= ',""';
+        }else{
+          $attribute_values .= ',"'.$created_at.'"';        
+        }
+
+        //added column for updated_date 
+        $updated_at = $product->getUpdatedAt();
+        if($updated_at===null){
+          $attribute_values .= ',""';
+        }else{
+          $attribute_values .= ',"'.$updated_at.'"';
+        }
+
         
         // Iterate list of attributes for this product
         $productvaluescount = count($field_names_arr);
@@ -1351,7 +1419,6 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
   public function createCategoryCsv($from, $to, $attributearray, $process_id, $filename, $type, $createdate, $intialexecution = false){
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::createCategoryCsv()", null, 'knolseed.log');
     $this->kslog('DEBUG',"From=".$from.", To=".$to.", Type=".$type.", CreateDate=".$createdate.", Filename=".$filename, null, 'knolseed.log');
-
     try{
 
       // CSV file save path
@@ -1400,6 +1467,8 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       */
 
       $category = Mage::getModel('catalog/category');
+      $this->kslog('DEBUG',"Categories = ".print_r($category,true),null,'knolseed.log');
+
       $tree = $category->getTreeModel();
       $tree->load();
       $ids = $tree->getCollection()->getAllIds();
@@ -1494,12 +1563,16 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     
     // remove process entry afetr 8 days
     $removedays = date('Y-m-d', strtotime("-8 day"));
+
+    $this->kslog('DEBUG',"Remove days = ".print_r($removedays,true),null,'knolseed.log');
     
     // delete record collection
     $collection = Mage::getModel('engage/engage')->getCollection();
     $collection->addFieldToFilter('created_at', array('eq' =>$removedays));
 
     $kfcrondata = $collection->getData();
+
+    $this->kslog('DEBUG',"kf cron data = ".print_r($kfcrondata,true),null,'knolseed.log');
 
     foreach($kfcrondata as $kfdata){
       // delete each process entry
@@ -1521,6 +1594,8 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         // Load process & update current process
         $kf_item = Mage::getModel('engage/engage')->load($processid);
         $updatedattempt = $kf_item->getAttempt() + 1;
+
+        $this->kslog('DEBUG',"Updated attempt = ".print_r($updatedattempt,true),null,'knolseed.log');
 
         $kf_item->setAttempt($updatedattempt);
         $kf_item->save();

@@ -24,24 +24,28 @@ class Knolseed_Engage_Block_Ga extends Mage_GoogleAnalytics_Block_Ga
         }
         /* Start Google Javascript code   */
         if(Mage::getSingleton('customer/session')->isLoggedIn()) {
+            # Mage::log("Customer is logged in", null, 'knolseed.log');
             $customerData = Mage::getSingleton('customer/session')->getCustomer();
             $customer_id = $customerData->getId();
             $script = Mage::getStoreConfig('engage_options/google/google_content');
-             $script=str_replace("customer_id",$customer_id,$script);
+            $script=str_replace("customer_id",$customer_id,$script);
         }
         else
         {
+            # Mage::log("Customer NOT logged in", null, 'knolseed.log');
             $customerData = Mage::getSingleton('customer/session')->getCustomer();
             $customer_id = $customerData->getId();
             $script = Mage::getStoreConfig('engage_options/google/google_content');
-             $script=str_replace('__bc.push(["_setCustomerId", "customer_id"])','',$script);
+            $script=str_replace('_knolseed.push(["_setCustomerId", "customer_id"])','',$script);
         }
         /* End Google Javascript code   */
         /*if($script)
         {*/
-            $finalscript=$script."_gaq.push(['_setAccount', '{$this->jsQuoteEscape($accountId)}']);
+        $finalscript=$script."_gaq.push(['_setAccount', '{$this->jsQuoteEscape($accountId)}']);
         _gaq.push(['_trackPageview'{$optPageURL}]);
         ";
+
+        # Mage::log("Returning=".$finalscript, null, 'knolseed.log');
         return $finalscript;
         /*}*/
         /*else

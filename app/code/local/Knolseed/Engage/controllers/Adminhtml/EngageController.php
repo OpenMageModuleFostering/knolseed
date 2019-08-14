@@ -44,19 +44,21 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
       $http->close(); 
 
       if( $data->success && $data->data->authentication_token ) {
-        Mage::log('KS Response:'.$data->data, null, 'knolseed.log');
+        Mage::log('KS Response:'.print_r($data->data,true), null, 'knolseed.log');
         $token = trim($data->data->authentication_token);
         $bucket = trim($data->data->s3_bucket);
         $folder = trim($data->data->s3_folder);
 
         $coreConfigObj = new Mage_Core_Model_Config();
         $coreConfigObj->saveConfig('engage_options/aws/token', $token, 'default', 0);
+        echo 1;
         return true;
 
       } else {
         // Log error message
         Mage::log('Knolseed get token - Invalid username/password.',null,'knolseed.err');
         Mage::log('Knolseed get token - Invalid username/password.',null,'knolseed.log');
+        echo 0;
         return false;
       }
                 
@@ -64,6 +66,7 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
       // Log error message
       Mage::log('Knolseed get token - Error while getting token from Knolseed API.',null,'knolseed.err');
       Mage::log('Knolseed get token - Error while getting token from Knolseed API.',null,'knolseed.log');
+      echo 0;
       return false;
     }
 
