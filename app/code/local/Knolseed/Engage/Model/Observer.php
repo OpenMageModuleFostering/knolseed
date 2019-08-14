@@ -115,7 +115,7 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
         # call to product & customer CSV creation method
         Mage::helper('engage')->processCustomerfile();
         Mage::helper('engage')->processProductfile();
-        Mage::helper('engage')->startUploadData();
+        Mage::helper('engage')->processHistoricalData();
 
         # flush kf_cron_process table
         Mage::helper('engage')->flushAllKfEntries();
@@ -160,11 +160,32 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 
 
   /**
+  * 1. Create a Manifest file with specified name & type.
+  * 2. Add $filenames into manifest file
+  * 3. Upload Manifest file to appropriate S3 folder, and return success
+  */
+  public function addManifestFile($manifestFileName, $type, $processid, $filenames){
+    $baseDir =  Mage::getBaseDir('var');
+    $fullPath = $baseDir."/".$manifestFileName;
+    $fp = gzopen($fullPath,'w9');
+    foreach($filenames as $fn){
+      gzwrite($fp, $fn."\n");
+    }
+    gzclose($fp);
+
+    # Push to S3
+    $this->pushFileToS3($fullPath, $manifestFileName, $type, true, $processid);
+    unlink($fullPath);
+  }
+
+
+
+  /**
    * Push created CSV files to S3 Bucket
    * @param   $filepath,$filename
    * @return  push file object to S3 bucket
    */ 
-  public function pushFileToS3($filepath, $filename, $type, $processid){
+  public function pushFileToS3($filepath, $filename, $type, $is_manifest_file, $processid){
     Mage::log("Entry Knolseed_Engage_Model_Observer::pushFileToS3()",null,'knolseed.log');
 
     $aws_connection = $this->getAwsAccessKey($this->aws_token);
@@ -179,10 +200,16 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
     # upload file to S3 bucket
     try{      
       $response = $aws_connection->upload($this->aws_bucketname, $key, fopen($source_file, 'r'), $this->aws_acl);
-      $this->trackS3PushToKf($filename,$type);
-
+      # $this->trackS3PushToKf($filename,$type);
+      if($is_manifest_file === true){
+        $this->trackS3PushToKf($filename, $type);        
+      }
+ 
+      # unlink($filepath);
       Mage::log("Uploaded. Returning true", null, "knolseed.log") ;
+
       return true ;
+
     }catch(Exception $e){
       // Check if critical error or retriable error
       if($processid){
@@ -343,4 +370,3 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 }
 
 ?>
-
