@@ -992,7 +992,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     Mage::log("From=".$from.", To=".$to.", Type=".$type.", CreateDate=".$createdate, null, 'knolseed.log');
     Mage::log("attributearray=".$attributearray, null, 'knolseed.log');
 
-    this->createCategoryCsv($from, $to, $attributearray, $process_id, $filename, $type, $createdate, $intialexecution);
+    # $this->createCategoryCsv($from, $to, $attributearray, $process_id, $filename, $type, $createdate, $intialexecution);
 
     try{
       // get product item collection for defined interval
