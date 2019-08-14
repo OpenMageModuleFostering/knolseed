@@ -27,6 +27,8 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
   public function __construct() {
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::__construct()",null,'knolseed.log');
 
+    date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') );
+
     // Get Customer Attributes from Database
     $customervalues = Mage::getModel('engage/customervalues')->toOptionArray();     
     foreach ($customervalues AS $key => $value) 

@@ -26,7 +26,8 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 
   public function __construct() {
     Mage::log("Entry Knolseed_Engage_Model_Observer::__construct()",null,'knolseed.log');
-
+    date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') );
+    
     $this->aws_token = Mage::getStoreConfig('engage_options/aws/token');
     # $this->aws_connection = $this->getAwsAccessKey($this->aws_token);
   }
@@ -130,7 +131,7 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
       Mage::log("Entry Knolseed_Engage_Model_Observer::setScript()",null,'knolseed.log');
 
       try{      
-        date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') ); 
+        date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') );
 
         # call to product & customer CSV creation method
         Mage::helper('engage')->processCustomerfile();
@@ -334,17 +335,41 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
   public function setUploadDataTimeframe(){
     Mage::log("Entry Knolseed_Engage_Model_Observer::setUploadDataTimeframe()",null,'knolseed.log');
 
+    date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') );
+
     // Get current date
-    $removedays = date('Y-m-d');
+    $today = date('Y-m-d');
+
     $uploadtime = Mage::getStoreConfig('upload_options/upload/time');
     if($uploadtime){
-      Mage::log("Txn data upload time=".print_r($uploadtime, true), null, 'knolseed.log');
+      Mage::log("Txn data upload time = ".print_r($uploadtime, true), null, 'knolseed.log');
+
+      # Create ts for "Today Time", "now" and "Tomorrow Time"
+      # If "Today Time" > now() schedule for "Today Time"
+      # Else schedule for "Tomorrow Time"
+      $now = date("Y-m-d H:i:s");
+      $nowInSecs = strtotime($now);
+      Mage::log("Now = ".print_r($now, true), null, 'knolseed.log');
+
+      $execTimeToday =  $today." ".$uploadtime;
+      $execTimeTodayInSecs = strtotime($execTimeToday);
+      Mage::log("execTimeToday = ".print_r($execTimeToday, true), null, 'knolseed.log');
+
+      $coreConfigObj3 = new Mage_Core_Model_Config();
+      if($execTimeTodayInSecs > $nowInSecs){
+        # Schedule for today
+        $coreConfigObj3->saveConfig('upload_options/upload/transaction', $execTimeToday, 'default', 0);
+      }else{
+        # Schedule for tomorrow
+        $execTimeTomorrow = date("Y-m-d H:i", $execTimeTodayInSecs+86400);
+        Mage::log("execTimeTomorrow = ".print_r($execTimeTomorrow, true), null, 'knolseed.log');
+        $coreConfigObj3->saveConfig('upload_options/upload/transaction', $execTimeTomorrow, 'default', 0);
+      }
+
     }else{
       Mage::log("Txn data upload time is not found", null, 'knolseed.log');
     }
 
-    $coreConfigObj3 = new Mage_Core_Model_Config();
-    $coreConfigObj3->saveConfig('upload_options/upload/transaction', $removedays." ".$uploadtime, 'default', 0);
     Mage::app()->getStore()->resetConfig();
   }
 
