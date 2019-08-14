@@ -19,7 +19,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
   public $intervalRange = 30;
 
   # To be configured appropriately
-  public $global_log_level = 'DEV';
+  public $global_log_level = 'PROD';
 
 
   public function __construct() {
