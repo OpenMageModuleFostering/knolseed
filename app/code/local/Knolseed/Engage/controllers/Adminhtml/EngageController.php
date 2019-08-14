@@ -27,7 +27,7 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
     try {
       $http = new Varien_Http_Adapter_Curl();
       $config = array('timeout' => 30); # Or whatever you like!
-      $config['header'] = true;
+      $config['header'] = false;
 
       $requestQuery = "email=".$email."&password=".$password;
 
@@ -38,38 +38,25 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
 
       ## Get Response
       $response = $http->read();
-      Mage::log("Response = ". print_r($response,true),null,'knolseed.log');
-
-      # $modResponse = preg_replace('/(\r\n|\r|\n)/s',"\n",$response);
-      # $responseParts = array();
-      # $responseParts = explode("\n\n", $modResponse);
-      $responseParts = explode("\r\n\r\n", $response);
+      $data = json_decode($response);
 
       # Close Call
-      $http->close();
-
-      # Fix for ignoring HTTP Headers in response.
-      # Mage::log("Response Header = ". print_r($responseParts[0],true),null,'knolseed.log');
-      Mage::log("Response Body = ". print_r($responseParts[1],true),null,'knolseed.log');
-      $data = json_decode($responseParts[1]);
+      $http->close(); 
 
       if( $data->success && $data->data->authentication_token ) {
-        Mage::log('KS Response:'.print_r($data->data,true), null, 'knolseed.log');
+        Mage::log('KS Response:'.$data->data, null, 'knolseed.log');
         $token = trim($data->data->authentication_token);
         $bucket = trim($data->data->s3_bucket);
         $folder = trim($data->data->s3_folder);
 
         $coreConfigObj = new Mage_Core_Model_Config();
         $coreConfigObj->saveConfig('engage_options/aws/token', $token, 'default', 0);
-        Mage::app()->getStore()->resetConfig();
-        echo 1;
         return true;
 
       } else {
         // Log error message
         Mage::log('Knolseed get token - Invalid username/password.',null,'knolseed.err');
         Mage::log('Knolseed get token - Invalid username/password.',null,'knolseed.log');
-        echo 0;
         return false;
       }
                 
@@ -77,7 +64,6 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
       // Log error message
       Mage::log('Knolseed get token - Error while getting token from Knolseed API.',null,'knolseed.err');
       Mage::log('Knolseed get token - Error while getting token from Knolseed API.',null,'knolseed.log');
-      echo 0;
       return false;
     }
 

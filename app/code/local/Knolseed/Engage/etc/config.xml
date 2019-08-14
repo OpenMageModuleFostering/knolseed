@@ -16,32 +16,22 @@
     <default>
         <engage_options>
             <google>
-                <google_content><![CDATA[(function (w, d, a, m) {
-                          w['_knolseed'] = w['_knolseed'] || [];
-                          /** intercepts ga.js calls */
-                          var push = Array.prototype.push;
-                          w['_gaq'] = [];
-                          w['_gaq'].push = function () {
-                             var i = 0, max = arguments.length, arg;
-                             while (i < max) {
-                               arg = arguments[i++]; push.call(_gaq, arg); push.call(_knolseed, arg);
-                             }
-                         };
-                         /** intercepts analytics.js calls */
-                          w['ga'] = function() {
-                            (w['ga'].q = w['ga'].q || []).push(arguments);
-                            (w['_knolseed'] = w['_knolseed'] || []).push(arguments);
-                          };
-                          a = d.createElement('script'),
-                          m = d.getElementsByTagName('script')[0];
-                          a.async = 1;
-                          a.src = 'http://ers.knolseed.com:1234/embed.js';
-                          m.parentNode.insertBefore(a, m)
-                        })(window,document)                    
-                    </script>
+                 <google_content><![CDATA[  var _gaq = [], __bc = [], push = Array.prototype.push;
+                         _gaq.push = function () {
+                         var i = 0, max = arguments.length, arg;
+                         while (i < max) {
+                           arg = arguments[i++]; push.call(_gaq, arg); push.call(__bc, arg);
+                         }
+                     };
+                     (function() {
+                         var bc = document.createElement('script'); bc.type='text/javascript'; bc.async=true;
+                         bc.src = 'http://ers.knolseed.com:1234/embed.js';
+                         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(bc, s);
+                     })();
+                </script>
 
-                    <script>
-                        _knolseed.push(["_setCustomerId", "customer_id"]);]]>                    
+                <script>
+                    __bc.push(["_setCustomerId", "customer_id"]);]]>
                 </google_content>
           </google>
         </engage_options>
@@ -210,7 +200,7 @@
         <jobs>
             <knolseed_engage>
                 <schedule>
-                    <cron_expr>*/5 * * * *</cron_expr>
+                    <cron_expr>*/10 * * * *</cron_expr>
                 </schedule>
                 <run>
                     <model>engage/observer::setScript</model>

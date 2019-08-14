@@ -13,18 +13,11 @@ class Knolseed_Engage_Block_Buttontestconnect extends Mage_Adminhtml_Block_Syste
    {
         Mage::log("Entry Knolseed_Engage_Block_Buttontestconnect::_getElementHtml()",null,'knolseed.log');
         $this->setElement($element); 
-        
         $pingURL = $this->getUrl('engage/adminhtml_engage/TestAws_Connection');
-        # Mage::log('pingURL='.$pingURL,null,'knolseed.log');
-
         $awstokenflag = (Mage::getStoreConfig('engage_options/aws/token')) ? '1' : '' ;
-        # Mage::log('awstokenflag='.$awstokenflag,null,'knolseed.log');
-
         $gaflag = (Mage::getStoreConfig('google/analytics/active')) ? '1' : '' ;
-        # Mage::log('gaflag='.$gaflag,null,'knolseed.log');
-
         $gasectionurl = Mage::getModel('adminhtml/url')->getUrl('/system_config/edit/section/google'); //Mage::getBaseUrl()."admin/system_config/edit/section/google/key/".$formkey."/";
-        # Mage::log('gasectionurl='.$gasectionurl,null,'knolseed.log');
+
 
         $html = $this->getLayout()->createBlock('adminhtml/widget_button')
                     ->setType('button')
@@ -33,10 +26,6 @@ class Knolseed_Engage_Block_Buttontestconnect extends Mage_Adminhtml_Block_Syste
                     ->setLabel('Connect')
                     ->setOnClick("testConnection();")
                     ->toHtml();
-        
-        # Mage::log('Checkpoint 1='.$html,null,'knolseed.log');
-
-
         $html .= '<style>  
                 button.success {
                     background-color: #46745E;
@@ -75,21 +64,27 @@ class Knolseed_Engage_Block_Buttontestconnect extends Mage_Adminhtml_Block_Syste
                         function validateToken(){
 
                             if(tokenvalidate){
-                                document.getElementById("engage_options_aws_username").disabled=true;
-                                document.getElementById("engage_options_aws_password").disabled=true;
-                                document.getElementById("testawsconnection").disabled=true;
 
-                                document.getElementById("engage_options_aws_username").className = "input-text disabled";
-                                document.getElementById("engage_options_aws_password").className = "input-text disabled";
-                                document.getElementById("testawsconnection").className="disabled";
+                             document.getElementById("engage_options_aws_username").disabled=true;
+                             document.getElementById("engage_options_aws_password").disabled=true;
+                             document.getElementById("testawsconnection").disabled=true;
 
-                                document.getElementById("default-label-credentials").style.display = "none";
+                             document.getElementById("engage_options_aws_username").className = "input-text disabled";
+                             document.getElementById("engage_options_aws_password").className = "input-text disabled";
+                             document.getElementById("testawsconnection").className="disabled";
+
+                             document.getElementById("default-label-credentials").style.display = "none";
+                             
                             }
+
                             
                             document.getElementById("engage_options_google_google_content").disabled=true;
                             document.getElementById("engage_options_google_google_content").className = "textarea disabled";
                             if(googleanalyticsenabled){
+
+                                
                                 document.getElementById("gastatus").innerHTML = "KnolSeed Analytics requires Google Analytics (GA) to be enabled.<br> Google Analytics is enabled" ;
+
                             }else{
 
                                 var anchor = "<div>KnolSeed Analytics requires Google Analytics (GA) to be enabled.<br> Please enable GA <a href="+coregooglemoduleurl+">here</a> and continue KnolSeed configuration.</div>";
@@ -108,13 +103,9 @@ class Knolseed_Engage_Block_Buttontestconnect extends Mage_Adminhtml_Block_Syste
                             document.getElementById("engage_options_aws_password").className = "input-text";
                             document.getElementById("testawsconnection").className = "scalable scalable";
                         }
-
-                        
                         window.onload = function(e){ 
                             validateToken();
                         }
-
-
                         function testConnection() {
                             var username=document.getElementById("engage_options_aws_username").value;
                             var password=document.getElementById("engage_options_aws_password").value;
@@ -152,12 +143,10 @@ class Knolseed_Engage_Block_Buttontestconnect extends Mage_Adminhtml_Block_Syste
                 </script>
                 ';
                 if($awstokenflag){
-                    # Mage::log('awstokenflag is true', null, 'knolseed.log');
-                    $html .= '<div>Knolseed Plugin is enabled. To change/re-enter credentials,click <a href="javascript:void(0);" onclick="reenterCredentials()">here</a></div>';
-                }
-        
 
-        # Mage::log('Returning='.$html, null, 'knolseed.log');        
+                  $html .= '<div>Knolseed Plugin is enabled. To change/re-enter credentials,click <a href="javascript:void(0);" onclick="reenterCredentials()">here</a></div>';
+                }
+                
         return $html;
     }
 }

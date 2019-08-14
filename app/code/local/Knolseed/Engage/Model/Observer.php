@@ -19,15 +19,13 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
   public $aws_foldername = '';
   public $aws_token = '';
   public $aws_acl = 'private';
-  public $aws_access_key = null;
 
   public $kf_authurl = 'http://app.knolseed.com/settings/keys?';
   public $kf_tracks3pushurl = 'http://app.knolseed.com/uploads/register?';
 
   public function __construct() {
     Mage::log("Entry Knolseed_Engage_Model_Observer::__construct()",null,'knolseed.log');
-    date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') );
-    
+
     $this->aws_token = Mage::getStoreConfig('engage_options/aws/token');
     # $this->aws_connection = $this->getAwsAccessKey($this->aws_token);
   }
@@ -43,16 +41,10 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
   public function getAwsAccessKey($token){
     Mage::log("Entry Knolseed_Engage_Model_Observer::getAwsAccessKey()",null,'knolseed.log');
 
-    # if(!is_null($this->aws_access_key)){
-      # Mage::log("Returning existing AWS Access Key",null,'knolseed.log');      
-      # return $this->aws_access_key;
-    # }
-
     try{
-      Mage::log("Generating new AWS Access Key",null,'knolseed.log');      
       $http = new Varien_Http_Adapter_Curl();
       $config = array('timeout' => 15); # Or whatever you like!
-      $config['header'] = true;
+      $config['header'] = false;
       $config['ssl_cert'] = false;
 
       $requestQuery = "auth_token=".$token;
@@ -61,26 +53,15 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
      
       ## make a POST call
       $http->write(Zend_Http_Client::GET, $this->kf_authurl . $requestQuery );
-
+     
       ## Get Response
       $response = $http->read();
-      # Mage::log("Response = ". print_r($response,true),null,'knolseed.log');
-
-      # $modResponse = preg_replace('/(\r\n|\r|\n)/s',"\n",$response);
-      # $responseParts = array();
-      # $responseParts = explode("\n\n", $modResponse);
-      $responseParts = explode("\r\n\r\n", $response);
+      $data = json_decode($response);
 
       # Close Call
-      $http->close();
+      $http->close(); 
 
-      # Fix for ignoring HTTP Headers in response.
-      # Mage::log("Response Header = ". print_r($responseParts[0],true),null,'knolseed.log');
-      # Mage::log("Response Body = ". print_r($responseParts[1],true),null,'knolseed.log');
-      $accessdetails = json_decode($responseParts[1]);
-      # $accessdetails =  json_decode($response);
-     
-      # Mage::log("JSON Decoded Response = ". print_r($accessdetails,true),null,'knolseed.log');
+      $accessdetails =  json_decode($response);
       # Mage::log('Printing response for '.$this->kf_authurl,null, 'knolseed.log');
       # Mage::log($accessdetails,null, 'knolseed.log');
       if( $accessdetails->data->access_key_id ) {
@@ -100,14 +81,12 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
             'token'  => $session_token
         ));
 
-        # Mage::log("JSON Decoded Response = ". print_r($accessdetails,true),null,'knolseed.log');
-
-        $this->aws_access_key = $client;
         return $client;
 
       }else{
         //Admin notification
         $errormessage = "Error: Product sync unable to contact Knolseed at ".$this->kf_authurl.$requestQuery.". Will retry again later" ;
+
         Mage::helper('engage')->errorAdminNotification('GetTemporaryCredentials','AWSpush',$errormessage,'',true);
       }
 
@@ -131,12 +110,12 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
       Mage::log("Entry Knolseed_Engage_Model_Observer::setScript()",null,'knolseed.log');
 
       try{      
-        date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') );
+        date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') ); 
 
         # call to product & customer CSV creation method
         Mage::helper('engage')->processCustomerfile();
         Mage::helper('engage')->processProductfile();
-        Mage::helper('engage')->processHistoricalData();
+        Mage::helper('engage')->startUploadData();
 
         # flush kf_cron_process table
         Mage::helper('engage')->flushAllKfEntries();
@@ -145,8 +124,6 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 
         Mage::helper('engage')->errorAdminNotification('setScript','AWSpush',$errormessage,'',true);
       }    
-
-      Mage::log("Exit Knolseed_Engage_Model_Observer::setScript()",null,'knolseed.log');
   }
   
 
@@ -183,32 +160,11 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 
 
   /**
-  * 1. Create a Manifest file with specified name & type.
-  * 2. Add $filenames into manifest file
-  * 3. Upload Manifest file to appropriate S3 folder, and return success
-  */
-  public function addManifestFile($manifestFileName, $type, $processid, $filenames){
-    $baseDir =  Mage::getBaseDir('var');
-    $fullPath = $baseDir."/".$manifestFileName;
-    $fp = gzopen($fullPath,'w9');
-    foreach($filenames as $fn){
-      gzwrite($fp, $fn."\n");
-    }
-    gzclose($fp);
-
-    # Push to S3
-    $this->pushFileToS3($fullPath, $manifestFileName, $type, true, $processid);
-    unlink($fullPath);
-  }
-
-
-
-  /**
    * Push created CSV files to S3 Bucket
    * @param   $filepath,$filename
    * @return  push file object to S3 bucket
    */ 
-  public function pushFileToS3($filepath, $filename, $type, $is_manifest_file, $processid){
+  public function pushFileToS3($filepath, $filename, $type, $processid){
     Mage::log("Entry Knolseed_Engage_Model_Observer::pushFileToS3()",null,'knolseed.log');
 
     $aws_connection = $this->getAwsAccessKey($this->aws_token);
@@ -223,16 +179,10 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
     # upload file to S3 bucket
     try{      
       $response = $aws_connection->upload($this->aws_bucketname, $key, fopen($source_file, 'r'), $this->aws_acl);
-      # $this->trackS3PushToKf($filename,$type);
-      if($is_manifest_file === true){
-        $this->trackS3PushToKf($filename, $type);        
-      }
- 
-      # unlink($filepath);
+      $this->trackS3PushToKf($filename,$type);
+
       Mage::log("Uploaded. Returning true", null, "knolseed.log") ;
-
       return true ;
-
     }catch(Exception $e){
       // Check if critical error or retriable error
       if($processid){
@@ -337,80 +287,36 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
   public function setUploadDataTimeframe(){
     Mage::log("Entry Knolseed_Engage_Model_Observer::setUploadDataTimeframe()",null,'knolseed.log');
 
-    date_default_timezone_set( Mage::app()->getStore()->getConfig('general/locale/timezone') );
-
     // Get current date
-    $today = date('Y-m-d');
-
+    $removedays = date('Y-m-d');
     $uploadtime = Mage::getStoreConfig('upload_options/upload/time');
-    if($uploadtime){
-      Mage::log("Txn data upload time = ".print_r($uploadtime, true), null, 'knolseed.log');
-
-      # Create ts for "Today Time", "now" and "Tomorrow Time"
-      # If "Today Time" > now() schedule for "Today Time"
-      # Else schedule for "Tomorrow Time"
-      $now = date("Y-m-d H:i:s");
-      $nowInSecs = strtotime($now);
-      Mage::log("Now = ".print_r($now, true), null, 'knolseed.log');
-
-      $execTimeToday =  $today." ".$uploadtime;
-      $execTimeTodayInSecs = strtotime($execTimeToday);
-      Mage::log("execTimeToday = ".print_r($execTimeToday, true), null, 'knolseed.log');
-
-      $coreConfigObj3 = new Mage_Core_Model_Config();
-      if($execTimeTodayInSecs > $nowInSecs){
-        # Schedule for today
-        $coreConfigObj3->saveConfig('upload_options/upload/transaction', $execTimeToday, 'default', 0);
-      }else{
-        # Schedule for tomorrow
-        $execTimeTomorrow = date("Y-m-d H:i", $execTimeTodayInSecs+86400);
-        Mage::log("execTimeTomorrow = ".print_r($execTimeTomorrow, true), null, 'knolseed.log');
-        $coreConfigObj3->saveConfig('upload_options/upload/transaction', $execTimeTomorrow, 'default', 0);
-      }
-
-    }else{
-      Mage::log("Txn data upload time is not found", null, 'knolseed.log');
-    }
-
-    Mage::app()->getStore()->resetConfig();
+    $coreConfigObj3 = new Mage_Core_Model_Config();
+    $coreConfigObj3->saveConfig('upload_options/upload/transaction', $removedays." ".$uploadtime, 'default', 0);
   }
 
 
   public function saveGoogleAnalyticsCode(){
     Mage::log("Entry Knolseed_Engage_Model_Observer::saveGoogleAnalyticsCode()",null,'knolseed.log');
 
-    $googlecode = "(function (w, d, a, m) {
-        w['_knolseed'] = w['_knolseed'] || [];
-        /** intercepts ga.js calls */
-        var push = Array.prototype.push;
-        w['_gaq'] = [];
-        w['_gaq'].push = function () {
-           var i = 0, max = arguments.length, arg;
-           while (i < max) {
-             arg = arguments[i++]; push.call(_gaq, arg); push.call(_knolseed, arg);
-           }
-       };
-       /** intercepts analytics.js calls*/
-        w['ga'] = function() {
-          (w['ga'].q = w['ga'].q || []).push(arguments);
-          (w['_knolseed'] = w['_knolseed'] || []).push(arguments);
-        };
-        a = d.createElement('script'),
-        m = d.getElementsByTagName('script')[0];
-        a.async = 1;
-        a.src = 'http://ers.knolseed.com:1234/embed.js';
-        m.parentNode.insertBefore(a, m)
-      })(window,document);
+    $googlecode = "var _gaq = [], __bc = [], push = Array.prototype.push;
+                         _gaq.push = function () {
+                         var i = 0, max = arguments.length, arg;
+                         while (i < max) {
+                           arg = arguments[i++]; push.call(_gaq, arg); push.call(__bc, arg);
+                         }
+                     };
+                     (function() {
+                         var bc = document.createElement('script'); bc.type='text/javascript'; bc.async=true;
+                         bc.src = 'http://ers.knolseed.com:1234/embed.js';
+                         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(bc, s);
+                     })();
+                </script>
 
-    </script>
-
-    <script>
-        _knolseed.push([\"_setCustomerId\", \"customer_id\"]);
-    ";
+                <script>
+                    __bc.push(['_setCustomerId', 'customer_id']);";
 
     $coreConfig = new Mage_Core_Model_Config();
     $coreConfig->saveConfig('engage_options/google/google_content', $googlecode, 'default', 0);
-    Mage::app()->getStore()->resetConfig();
 
   }
 

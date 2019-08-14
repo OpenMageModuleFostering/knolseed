@@ -3,7 +3,7 @@
     "type": "magento-module",
     "license": "Open-Software-License",
     "homepage": "",
-    "description": "Knolseed Magento Extension",
+    "description": "Knolseed is a customer engagement product to run email campaigns targeted to specific customer segments.",
     "authors": [
     {
         "name": "Mohan Varadarajan",
