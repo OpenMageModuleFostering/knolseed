@@ -1,0 +1,16 @@
+{
+    "name": "OpenMageModuleFostering/Knolseed",
+    "type": "magento-module",
+    "license": "Open-Software-License",
+    "homepage": "",
+    "description": "Knolseed is a customer engagement product to run email campaigns targeted to specific customer segments.",
+    "authors": [
+    {
+        "name": "Mohan Varadarajan",
+        "email": "mohan@knolseed.com"
+    }
+],
+    "suggest": {
+        "magento-hackathon/magento-composer-installer": "*"
+    }
+}
