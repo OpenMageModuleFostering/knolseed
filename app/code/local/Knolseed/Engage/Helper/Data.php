@@ -21,6 +21,8 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
   # To be configured appropriately
   public $global_log_level = 'PROD';
+  # public $global_log_level = 'DEV';
+
 /* contructing customer and product attributes*/
   public function __construct() {
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::__construct()",null,'knolseed.log');
@@ -131,11 +133,13 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
   }
 
+
 /* function to print product categories*/
   public function printCategories(){
     $this->kslog('DEBUG',"Entry Knolseed_Engage_Helper_Data::printCategories()",null,'knolseed.log');
     # $this->printCategories_1();
   }
+
 
 /* function to print categories */
   public function printCategories_1(){
@@ -218,7 +222,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       // Line items 2 as per requirement
       $metaheadersline2 = "";
-      $metaheadersline2 = '# id=\'Transaction_id\', cid=\'Customer_id\', sku=\'sku\', category=\'Category\', timestamp=\'Timestamp\', total=\'Transaction Amount\''."\n" ;
+      $metaheadersline2 = '#= id=\'Transaction_id\', cid=\'Customer_id\', sku=\'sku\', category=\'Category_Ids\', timestamp=\'Timestamp\', total=\'Transaction Amount\''."\n" ;
       gzwrite($fp, $metaheadersline2);
 
       //Double quotes logic for headers
@@ -228,13 +232,14 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       $Product_id_header = 'Product_id';
       $sku_header = 'sku';
       $Category_header = 'Category';
+      $category_ids_header = 'Category_Ids';
       $Tax_header = 'Tax';
       $Shipping_header = 'Shipping';
 
       // $handle = fopen('test.csv', 'w');
       // fputcsv($fp, array($transaction_id_header,$customer_id_header,$timestamp_header,$Product_id_header,$Category_header,
                 //'Transaction Amount','No of items',$Tax_header,$Shipping_header,'Product Description'));
-      $headers_transaction = '"'.$transaction_id_header.'","'.$customer_id_header.'","'.$timestamp_header.'","'.$Product_id_header.'","'.$sku_header.'","'.$Category_header.'","Transaction Amount","No of items","'.$Tax_header.'","'.$Shipping_header.'","Product Description","base_currency_code","order_currency_code","store_currency_code","global_currency_code"'."\n" ;
+      $headers_transaction = '"'.$transaction_id_header.'","'.$customer_id_header.'","'.$timestamp_header.'","'.$Product_id_header.'","'.$sku_header.'","'.$Category_header.'","'.$category_ids_header.'","Transaction Amount","No of items","'.$Tax_header.'","'.$Shipping_header.'","Product Description","base_currency_code","order_currency_code","store_currency_code","global_currency_code"'."\n" ;
       gzwrite($fp, $headers_transaction) ;
 
       // Iterate through sales order items
@@ -266,7 +271,9 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         //$cats = implode(",", $product->getCategoryIds());
         
         $categorynames = array() ;
+        $categoryIds = array();
         foreach( $product->getCategoryIds() as $categoryid ) {
+          $categoryIds[] = $categoryid;
           $catagory_model = Mage::getModel('catalog/category');
           $categories = $catagory_model->load($categoryid); // where $id will be the known category id 
           $categorynames[] = $categories->getName();
@@ -274,11 +281,13 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         $cats = implode(",", $categorynames);
         $cats = str_replace('"', '""', $cats);
 
+        $catids = implode(",", $categoryIds);
+
         // Puting sales order items into CSV file
         //fputcsv($fp, array($transaction_id,$customer_id,$timestamp,$product_id,$cats,$transaction_amount,
                   // $items,$tax,$shipping,$description));
 
-        gzwrite($fp, '"'.$transaction_id.'","'.$customer_id.'","'.$timestamp.'","'.$product_id.'","'.$sku.'","'.$cats.'","'.$product_price.'","'.$items.'","'.$tax.'","'.$shipping.'","'.$description.'","'.$bcc.'","'.$occ.'","'.$scc.'","'.$gcc.'"'."\n");
+        gzwrite($fp, '"'.$transaction_id.'","'.$customer_id.'","'.$timestamp.'","'.$product_id.'","'.$sku.'","'.$cats.'","'.$catids.'","'.$product_price.'","'.$items.'","'.$tax.'","'.$shipping.'","'.$description.'","'.$bcc.'","'.$occ.'","'.$scc.'","'.$gcc.'"'."\n");
         
       }
       // Close file
@@ -363,7 +372,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       // Line items 2 as per requirement 
       $metaheadersline2 = "";
-      $metaheadersline2 = '# cid=\'Customer_id\', url=\'URL\', timestamp=\'Timestamp\''."\n" ;
+      $metaheadersline2 = '#= cid=\'Customer_id\', url=\'URL\', timestamp=\'Timestamp\''."\n" ;
       //$metaheadersline2 = "# cid='Customer_id', url='URL', timestamp='Timestamp'\n" ;
       gzwrite($fp, $metaheadersline2);
 
@@ -470,15 +479,14 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     $cFrom = strtotime($from);
     $cTo = strtotime($to);
 
-  $this->kslog('DEBUG',"cFrom = ".print_r($from,true),null,'knolseed.log');
-  $this->kslog('DEBUG',"cTo = ".print_r($to,true),null,'knolseed.log');
+    $this->kslog('DEBUG',"cFrom = ".print_r($from,true),null,'knolseed.log');
+    $this->kslog('DEBUG',"cTo = ".print_r($to,true),null,'knolseed.log');
 
     if(($cRuntime >= $cFrom)&& ($cRuntime <= $cTo)){
       return true;
     }else{
       return false;       
     }
-
   }
 
 
@@ -630,7 +638,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       // Line items 2 as per requirement
       $metaheadersline2 = "";
-      $metaheadersline2 = '# id=\'Customer_id\', email=\'email\''."\n" ;
+      $metaheadersline2 = '#= id=\'Customer_id\', email=\'email\''."\n" ;
       //$metaheadersline2 = "# id='Customer_id', email='email'\n" ;
       gzwrite($fp, $metaheadersline2);
 
@@ -761,9 +769,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       return false;
     }
-
   }
-
 
 
   /**
@@ -810,8 +816,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       $errormessage = "Error: Data dump failed. Will retry again later" ;
       $this->errorAdminNotification('Queue-checking-error','checkqueue',$errormessage,'',true);
     }
-
-  } 
+  }
 
 
   /**
@@ -993,7 +998,6 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       Mage::log("An error occurred while sending an email: ".$e->getMessage(),null,'knolseed.err');
       Mage::log("An error occurred while sending an email: ".$e->getMessage(),null,'knolseed.log');
     }
-
   }
 
 
@@ -1144,7 +1148,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       
       // Line items 2 as per requirement
       $metaheadersline2 = "";
-      $metaheadersline2 = '# id=\'Sku\', url=\'url_key\',category=\'category_ids\''."\n" ;
+      $metaheadersline2 = '#= id=\'Sku\', url=\'url_key\',category=\'category_ids\''."\n" ;
        $this->kslog('DEBUG',"metaheadersline2=".$metaheadersline2, null, 'knolseed.log');
       gzwrite($fp, $metaheadersline2);
 
@@ -1316,24 +1320,11 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
           $catNames = array();
           $z=0;
           $attributeValue = "";
-          foreach($categoryIds as $catid){
-            $this->kslog('DEBUG',"Dumping catid=".print_r($catid,true), null, 'knolseed.log');
-
-            # $CategoryId = $catid[$z];
-            # Mage::log("Found CategoryId=".print_r($CategoryId,true), null, 'knolseed.log');
-
-            $_category = Mage::getModel('catalog/category')->load($catid);
-
-            $catName = $_category->getName();
-            $this->kslog('DEBUG',"Found cat name=".print_r($catName,true), null, 'knolseed.log');            
-
-            if($catName && strlen($catName)>0){
-              $catNames[] = $_category->getName();
-            }
-          }
-          $attributeValue = implode(",",$catNames);              
+          $attributeValue = implode(",",$categoryIds);              
           $this->kslog('DEBUG',"Adding category_ids = ".print_r($attributeValue,true), null, 'knolseed.log');          
           $attribute_values .= ',"'.str_replace('"', '""', $attributeValue).'"';
+        }else{
+          $attribute_values .= ',';
         }
 
         $attribute_values .= "\n";
@@ -1444,7 +1435,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       gzwrite($fp,$metaheaders);
       $metaheadersline2 = "";
-      $metaheadersline2 = '# id=\'id\', name=\'name\',child=\'child_id\''."\n" ;
+      $metaheadersline2 = '#= id=\'id\', name=\'name\',child=\'child_id\''."\n" ;
       gzwrite($fp, $metaheadersline2);
 
       // headers for product CSV file
@@ -1607,4 +1598,5 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
 
 }
+
 
