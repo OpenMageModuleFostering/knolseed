@@ -27,7 +27,7 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
     try {
       $http = new Varien_Http_Adapter_Curl();
       $config = array('timeout' => 30); # Or whatever you like!
-      $config['header'] = true;
+      $config['header'] = false;
 
       $requestQuery = "email=".$email."&password=".$password;
 
@@ -263,4 +263,3 @@ class Knolseed_Engage_Adminhtml_EngageController extends Mage_Adminhtml_Controll
   }
 
 }
-
