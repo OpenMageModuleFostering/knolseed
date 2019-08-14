@@ -145,6 +145,8 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 
         Mage::helper('engage')->errorAdminNotification('setScript','AWSpush',$errormessage,'',true);
       }    
+
+      Mage::log("Exit Knolseed_Engage_Model_Observer::setScript()",null,'knolseed.log');
   }
   
 
@@ -415,4 +417,3 @@ class Knolseed_Engage_Model_Observer extends Mage_Core_Model_Abstract
 }
 
 ?>
-
