@@ -992,7 +992,7 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
     Mage::log("From=".$from.", To=".$to.", Type=".$type.", CreateDate=".$createdate, null, 'knolseed.log');
     Mage::log("attributearray=".$attributearray, null, 'knolseed.log');
 
-    $this->createCategoryCsv($from, $to, $attributearray, $process_id, $filename, $type, $createdate, $intialexecution);
+    this->createCategoryCsv($from, $to, $attributearray, $process_id, $filename, $type, $createdate, $intialexecution);
 
     try{
       // get product item collection for defined interval
@@ -1020,26 +1020,19 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
         $begindate = $collection->getFirstItem()->getCreatedAt();
         $endingdate = Mage::getModel('core/date')->date('Y-m-d 00:00:00');
         $metaheaders = '# "'.$type.'","'.$ctime.'","'.$begindate.'","'.$endingdate.'"'."\n" ;
+        //$metaheaders = "# ".$type.",".$ctime.",".$from."\n" ;
       }else{
         $ts   = strtotime($createdate);
         $createday = date('Ymd',$ts);
         $metaheaders = "";
         $metaheaders = '# "'.$type.'","'.$createday.'","'.$from.'","'.$to.'"'."\n" ;
+        //$metaheaders = "# ".$type.",".$createday.",".$from.",".$to."\n" ;
       }
 
       // product attributes list
       $productvaluescount = count($attributearray);
-      $field_names_arr = array();
-      foreach ($attributearray as $field_name) {
-        if($field_name != "sku" && $field_name != "category_ids"){
-          $field_names_arr[] = $field_name;
-        }
-      }
-      Mage::log("field_names_arr=".print_r($field_names_arr, true), null, 'knolseed.log');
-      Mage::log("field_names_arr length=".print_r(count($field_names_arr), true), null, 'knolseed.log');
-
-      // Gotcha? Is the 'trim' complicating field lookups?
-      $product_Attr_str = '"'.implode('","', array_map('trim', $field_names_arr)).'"';
+      //$product_Attr_str = implode(",",array_map('trim',$attributearray));
+      $product_Attr_str = '"'.implode('","', array_map('trim', $attributearray)).'"';
       Mage::log("product_Attr_str=".$product_Attr_str, null, 'knolseed.log');
 
       if( !trim($filename)) {
@@ -1059,10 +1052,11 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
       // Line items 2 as per requirement
       $metaheadersline2 = "";
       $metaheadersline2 = '# id=\'Sku\', url=\'url_key\',category=\'category_ids\''."\n" ;
+      //$metaheadersline2 = "# id='Sku', url='url_key', category='category_ids'\n" ;
       gzwrite($fp, $metaheadersline2);
 
       // headers for product CSV file
-      $headers = '"product_id","Sku",'.$product_Attr_str.',"category_ids"'."\n";
+      $headers = '"Sku",'.str_replace('"sku",','',$product_Attr_str)."\n";
       Mage::log("headers=".$headers, null, 'knolseed.log');
 
       //fwrite($fp,$headers);
@@ -1070,22 +1064,18 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
       $chunkcounter = $filecounter = 1;
       foreach ($collection as $products) //loop for getting products
-      {
+      {   
         // load product
-        $pid = $products->getId();
-        $attribute_values = '"'.str_replace('"', '""', $pid).'"';
-
         $product = Mage::getModel('catalog/product')->load($products->getId());
         $attributes = $product->getAttributes();
 
-        $attribute_values .= ',"'.str_replace('"', '""', $product->getSku()).'"';
-        Mage::log("Starting loop for SKU=".$product->getSku(), null, 'knolseed.log');
+        #var_dump($attributes);
         
-        // Iterate list of attributes for this product
-        $productvaluescount = count($field_names_arr);
+        $attribute_values = '"'.str_replace('"', '""', $product->getSku()).'"';
+        Mage::log("Starting loop for SKU=".$product->getSku(), null, 'knolseed.log');
         for($i=0;$i<$productvaluescount;$i++)
         {
-          $attributeName = $field_names_arr[$i];
+          $attributeName = $attributearray[$i];
           Mage::log("attributeName=".$attributeName, null, 'knolseed.log');
           
           if($attributeName!='sku')
@@ -1496,4 +1486,3 @@ class Knolseed_Engage_Helper_Data extends Mage_Core_Helper_Abstract
 
 
 }
-

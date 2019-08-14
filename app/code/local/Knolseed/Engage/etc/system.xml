@@ -81,24 +81,6 @@
 							<tooltip>KnolSeed will sync your Product Catalog everyday at this time</tooltip>
 							<comment>Choose a time that has minimum performance impact on your website. Eg, if your website traffic is lowest at 3AM, then choose 3AM here.</comment>
 						</cron_time>
-						 <!--<interval translate="label comment">
-                            <label>Interval</label>
-                            <comment><![CDATA[Specify interval in minutes]]></comment>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>4</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>0</show_in_website>
-                            <show_in_store>1</show_in_store>
-                        </interval>-->
-						<!--<run translate="label">
-				           <label>Export to CSV</label>
-				           <frontend_type>button</frontend_type>
-				           <frontend_model>engage/button</frontend_model>
-				           <sort_order>20</sort_order>
-				           <show_in_default>1</show_in_default>
-				           <show_in_website>1</show_in_website>
-				           <show_in_store>1</show_in_store>
-				         </run> -->
 					</fields>               
                 </product>
             </groups> 
@@ -123,24 +105,6 @@
 							<tooltip>KnolSeed will sync your Customer Attributes everyday at this time</tooltip>
 							<comment>Choose a time that has minimum performance impact on your website. Eg, if your website traffic is lowest at 3AM, then choose 3AM here.</comment>
 						</cron_time>
-						<!--<interval translate="label comment">
-                            <label>Interval</label>
-                            <comment><![CDATA[Specify interval in minutes]]></comment>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>4</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>0</show_in_website>
-                            <show_in_store>1</show_in_store>
-                        </interval> 
-						<run translate="label">
-				           <label>Export to CSV</label>
-				           <frontend_type>button</frontend_type>
-				           <frontend_model>engage/buttonexport</frontend_model>
-				           <sort_order>21</sort_order>
-				           <show_in_default>1</show_in_default>
-				           <show_in_website>1</show_in_website>
-				           <show_in_store>1</show_in_store>
-				         </run> -->
 					</fields>               
                 </customer>
             </groups>  
@@ -164,16 +128,6 @@
 							<show_in_store>1</show_in_store>
 							<tooltip>KnolSeed will embed this snippet in your product webpages. This will allow you to segment your audience based on website browsing and buying behaviour.</tooltip>             
 						</google_content>
-						<!--<google_account_number>
-							<label>Google Account Number</label>
-							<frontend_type>text</frontend_type>
-							<validate>required-entry-firstname</validate>
-							<sort_order>3</sort_order>
-							<show_in_default>1</show_in_default>
-							<show_in_website>1</show_in_website>
-							<show_in_store>1</show_in_store>
-							<comment>Knolseed Analytics needs Google Analytics to be enabled. To enable, please enter your Google Account Number above and save the configuration</comment>      
-						</google_account_number>-->
 					</fields>               
                 </google>
             </groups>  
@@ -207,7 +161,7 @@
 							<show_in_default>1</show_in_default>
 							<show_in_website>1</show_in_website>
 							<show_in_store>1</show_in_store>
-							<tooltip>Transaction data for selected timeframe will be synced with KnolSeed.</tooltip>
+							<tooltip>All the selected data (Transactions/Weblogs) will be synced with KnolSeed.</tooltip>
 							<comment><![CDATA[<style>#row_upload_options_upload_upload_info td.value {width:410px !important;}</style>]]></comment>           
 						</upload_info> 
 						<timeframe>
