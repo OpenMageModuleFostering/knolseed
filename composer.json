@@ -1,16 +1,19 @@
 {
-    "name": "OpenMageModuleFostering/Knolseed",
+    "name": "OpenMageModuleFostering\/Knolseed",
     "type": "magento-module",
     "license": "Open-Software-License",
     "homepage": "",
     "description": "Knolseed Magento Extension",
     "authors": [
-    {
-        "name": "Mohan Varadarajan",
-        "email": "mohan@knolseed.com"
-    }
-],
+        {
+            "name": "Mohan Varadarajan",
+            "email": "mohan@knolseed.com"
+        }
+    ],
     "suggest": {
-        "magento-hackathon/magento-composer-installer": "*"
-    }
+        "magento-hackathon\/magento-composer-installer": "*"
+    },
+    "keywords": [
+        "openmage-module"
+    ]
 }
