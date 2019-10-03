@@ -1,7 +1,7 @@
 {
-    "name": "OpenMageModuleFostering\/Knolseed",
+    "name": "openmage-module-fostering\/knolseed",
     "type": "magento-module",
-    "license": "Open-Software-License",
+    "license": "OSL-3.0",
     "homepage": "",
     "description": "Knolseed Magento Extension",
     "authors": [
